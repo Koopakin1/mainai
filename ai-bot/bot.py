@@ -11,9 +11,15 @@ from telegram.ext import (
 # Включаем логирование
 logging.basicConfig(level=logging.INFO)
 
-# Получаем токены из переменных окружения
-TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', 'ВАШ_ТОКЕН_ТУТ')
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', 'sk-...')
+def get_secret(path, default=None):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except Exception:
+        return default
+
+TELEGRAM_TOKEN = get_secret(os.environ.get('TELEGRAM_TOKEN_FILE', '/run/secrets/telegram_token'))
+OPENAI_API_KEY = get_secret(os.environ.get('OPENAI_API_KEY_FILE', '/run/secrets/openai_api_key'))
 
 # --- Константы для ConversationHandler ---
 SELECT_SETTING, = range(1)

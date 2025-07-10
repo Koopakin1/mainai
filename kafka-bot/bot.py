@@ -5,14 +5,20 @@ from kafka import KafkaAdminClient, KafkaProducer, KafkaConsumer
 from kafka.admin import NewTopic
 import os
 
+def get_secret(path, default=None):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except Exception:
+        return default
+
+TELEGRAM_TOKEN = get_secret(os.environ.get('TELEGRAM_TOKEN_FILE', '/run/secrets/telegram_token'))
+
 # Логирование
 logging.basicConfig(level=logging.INFO)
 
 # Конфиг Kafka
 KAFKA_BOOTSTRAP_SERVERS = os.environ.get('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092')
-
-# Токен Telegram-бота
-TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', 'ВАШ_ТОКЕН_ТУТ')
 
 # Главное меню
 main_menu = ReplyKeyboardMarkup([

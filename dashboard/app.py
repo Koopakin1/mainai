@@ -5,6 +5,15 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 import httpx
 
+def get_secret(path, default=None):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except Exception:
+        return default
+
+TELEGRAM_TOKEN = get_secret(os.environ.get('TELEGRAM_TOKEN_FILE', '/run/secrets/telegram_token'))
+
 # Список сервисов для мониторинга (название: url healthcheck)
 SERVICES = {
     'scrapy-bot': os.environ.get('SCRAPY_BOT_URL', 'http://scrapy-bot:8000/health'),

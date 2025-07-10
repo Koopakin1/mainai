@@ -3,10 +3,17 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import httpx
 
+def get_secret(path, default=None):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except Exception:
+        return default
+
 # Переменные окружения для доступа к WordPress
-WP_URL = os.environ.get('WP_URL', 'https://example.com')
-WP_USER = os.environ.get('WP_USER', 'admin')
-WP_PASSWORD = os.environ.get('WP_PASSWORD', 'password')
+WP_URL = get_secret(os.environ.get('WP_URL_FILE', '/run/secrets/wp_url'))
+WP_USER = get_secret(os.environ.get('WP_USER_FILE', '/run/secrets/wp_user'))
+WP_PASSWORD = get_secret(os.environ.get('WP_PASSWORD_FILE', '/run/secrets/wp_password'))
 
 app = FastAPI()
 
