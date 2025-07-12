@@ -15,6 +15,11 @@ Vault Agent - это легковесный клиент, который:
 .\start-bots.ps1
 ```
 
+### 2. Управление секретами
+```powershell
+.\manage-secrets.ps1
+```
+
 ### 2. Ручной запуск
 ```bash
 # Запуск Vault и инфраструктуры
@@ -40,16 +45,26 @@ docker-compose up -d ai-bot kafka-bot scrapy-bot dashboard wp-publisher
 
 ### 2. Через командную строку
 ```bash
-# Просмотр Telegram токена
-docker exec vault vault kv get secret/telegram/token
+# AI Bot секреты
+docker exec vault vault kv get secret/ai-bot/telegram_token
+docker exec vault vault kv get secret/ai-bot/openai_api_key
+docker exec vault vault kv put secret/ai-bot/telegram_token token="НОВЫЙ_ТОКЕН"
+docker exec vault vault kv put secret/ai-bot/openai_api_key key="НОВЫЙ_КЛЮЧ"
 
-# Обновление Telegram токена
-docker exec vault vault kv put secret/telegram/token token="НОВЫЙ_ТОКЕН"
+# Kafka Bot секреты
+docker exec vault vault kv get secret/kafka-bot/telegram_token
+docker exec vault vault kv put secret/kafka-bot/telegram_token token="НОВЫЙ_ТОКЕН"
 
-# Просмотр WordPress учетных данных
+# Scrapy Bot секреты
+docker exec vault vault kv get secret/scrapy-bot/telegram_token
+docker exec vault vault kv put secret/scrapy-bot/telegram_token token="НОВЫЙ_ТОКЕН"
+
+# Dashboard секреты
+docker exec vault vault kv get secret/dashboard/telegram_token
+docker exec vault vault kv put secret/dashboard/telegram_token token="НОВЫЙ_ТОКЕН"
+
+# WordPress Publisher секреты
 docker exec vault vault kv get secret/wordpress/credentials
-
-# Обновление WordPress учетных данных
 docker exec vault vault kv put secret/wordpress/credentials url="http://example.com" user="admin" password="newpassword"
 ```
 
@@ -63,13 +78,34 @@ vault/
 ├── agent-config-dashboard.hcl      # Конфигурация Vault Agent для Dashboard
 ├── agent-config-wp-publisher.hcl   # Конфигурация Vault Agent для WordPress Publisher
 ├── templates/
-│   ├── telegram_token.tpl          # Шаблон для извлечения Telegram токена
+│   ├── ai_bot_telegram_token.tpl   # Шаблон для AI Bot Telegram токена
+│   ├── ai_bot_openai_api_key.tpl   # Шаблон для AI Bot OpenAI API ключа
+│   ├── kafka_bot_telegram_token.tpl # Шаблон для Kafka Bot Telegram токена
+│   ├── scrapy_bot_telegram_token.tpl # Шаблон для Scrapy Bot Telegram токена
+│   ├── dashboard_telegram_token.tpl # Шаблон для Dashboard Telegram токена
 │   ├── wp_url.tpl                  # Шаблон для извлечения WordPress URL
 │   ├── wp_user.tpl                 # Шаблон для извлечения WordPress пользователя
 │   └── wp_password.tpl             # Шаблон для извлечения WordPress пароля
 ├── secrets/                        # Директория для извлеченных секретов
 ├── init-vault.sh                   # Скрипт инициализации (Linux)
 └── init-vault.ps1                  # Скрипт инициализации (Windows)
+```
+
+## 🔐 Структура секретов в Vault
+
+```
+secret/
+├── ai-bot/
+│   ├── telegram_token              # Telegram токен для AI Bot
+│   └── openai_api_key              # OpenAI API ключ для AI Bot
+├── kafka-bot/
+│   └── telegram_token              # Telegram токен для Kafka Bot
+├── scrapy-bot/
+│   └── telegram_token              # Telegram токен для Scrapy Bot
+├── dashboard/
+│   └── telegram_token              # Telegram токен для Dashboard
+└── wordpress/
+    └── credentials                 # WordPress учетные данные
 ```
 
 ## 🔑 Аутентификация
@@ -81,10 +117,31 @@ vault/
 
 ### Политика безопасности
 ```hcl
-path "secret/data/telegram/token" {
+# AI Bot секреты
+path "secret/data/ai-bot/telegram_token" {
   capabilities = ["read"]
 }
 
+path "secret/data/ai-bot/openai_api_key" {
+  capabilities = ["read"]
+}
+
+# Kafka Bot секреты
+path "secret/data/kafka-bot/telegram_token" {
+  capabilities = ["read"]
+}
+
+# Scrapy Bot секреты
+path "secret/data/scrapy-bot/telegram_token" {
+  capabilities = ["read"]
+}
+
+# Dashboard секреты
+path "secret/data/dashboard/telegram_token" {
+  capabilities = ["read"]
+}
+
+# WordPress Publisher секреты
 path "secret/data/wordpress/credentials" {
   capabilities = ["read"]
 }

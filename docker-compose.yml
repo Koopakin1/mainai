@@ -145,7 +145,8 @@ services:
     volumes:
       - ./vault/secrets:/app/secrets:ro
     environment:
-      - TELEGRAM_TOKEN_FILE=/app/secrets/telegram_token
+      - TELEGRAM_TOKEN_FILE=/app/secrets/ai_bot_telegram_token
+      - OPENAI_API_KEY_FILE=/app/secrets/ai_bot_openai_api_key
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
     networks:
       - bot-network
@@ -160,7 +161,7 @@ services:
     volumes:
       - ./vault/secrets:/app/secrets:ro
     environment:
-      - TELEGRAM_TOKEN_FILE=/app/secrets/telegram_token
+      - TELEGRAM_TOKEN_FILE=/app/secrets/kafka_bot_telegram_token
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
     networks:
       - bot-network
@@ -175,7 +176,7 @@ services:
       - ./scrapy-bot/config.db:/app/config.db
       - ./vault/secrets:/app/secrets:ro
     environment:
-      - TELEGRAM_TOKEN_FILE=/app/secrets/telegram_token
+      - TELEGRAM_TOKEN_FILE=/app/secrets/scrapy_bot_telegram_token
     networks:
       - bot-network
     restart: unless-stopped
@@ -190,7 +191,7 @@ services:
     volumes:
       - ./vault/secrets:/app/secrets:ro
     environment:
-      - TELEGRAM_TOKEN_FILE=/app/secrets/telegram_token
+      - TELEGRAM_TOKEN_FILE=/app/secrets/dashboard_telegram_token
       - SCRAPY_BOT_URL=http://scrapy-bot:8000/health
       - KAFKA_BOT_URL=http://kafka-bot:8000/health
       - AI_BOT_URL=http://ai-bot:8000/health

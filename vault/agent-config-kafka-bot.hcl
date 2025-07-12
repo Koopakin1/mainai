@@ -12,8 +12,8 @@ auto_auth {
 }
 
 template {
-  source      = "/vault/templates/telegram_token.tpl"
-  destination = "/vault/secrets/telegram_token"
+  source      = "/vault/templates/kafka_bot_telegram_token.tpl"
+  destination = "/vault/secrets/kafka_bot_telegram_token"
 }
 
 vault {

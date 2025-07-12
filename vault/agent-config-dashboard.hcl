@@ -12,8 +12,8 @@ auto_auth {
 }
 
 template {
-  source      = "/vault/templates/telegram_token.tpl"
-  destination = "/vault/secrets/telegram_token"
+  source      = "/vault/templates/dashboard_telegram_token.tpl"
+  destination = "/vault/secrets/dashboard_telegram_token"
 }
 
 vault {

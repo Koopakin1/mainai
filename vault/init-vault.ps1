@@ -29,10 +29,31 @@ docker exec vault vault secrets enable -path=secret kv-v2
 # Создаем политику для ботов
 Write-Host "📋 Создание политики для ботов..." -ForegroundColor Yellow
 $policyContent = @"
-path "secret/data/telegram/token" {
+# AI Bot секреты
+path "secret/data/ai-bot/telegram_token" {
   capabilities = ["read"]
 }
 
+path "secret/data/ai-bot/openai_api_key" {
+  capabilities = ["read"]
+}
+
+# Kafka Bot секреты
+path "secret/data/kafka-bot/telegram_token" {
+  capabilities = ["read"]
+}
+
+# Scrapy Bot секреты
+path "secret/data/scrapy-bot/telegram_token" {
+  capabilities = ["read"]
+}
+
+# Dashboard секреты
+path "secret/data/dashboard/telegram_token" {
+  capabilities = ["read"]
+}
+
+# WordPress Publisher секреты
 path "secret/data/wordpress/credentials" {
   capabilities = ["read"]
 }
@@ -65,16 +86,33 @@ Write-Host "💾 Сохранение учетных данных..." -Foregroun
 $roleIdValue | Out-File -FilePath "vault\roleid" -Encoding UTF8
 $secretIdValue | Out-File -FilePath "vault\secretid" -Encoding UTF8
 
-# Записываем Telegram токен в Vault
-Write-Host "📱 Сохранение Telegram токена в Vault..." -ForegroundColor Yellow
-docker exec vault vault kv put secret/telegram/token token="ВАШ_ТОКЕН_ТУТ"
+# Записываем секреты для всех сервисов в Vault
+Write-Host "📱 Сохранение секретов для всех сервисов в Vault..." -ForegroundColor Yellow
 
-# Записываем WordPress учетные данные в Vault
-Write-Host "📝 Сохранение WordPress учетных данных в Vault..." -ForegroundColor Yellow
+# AI Bot секреты
+docker exec vault vault kv put secret/ai-bot/telegram_token token="ВАШ_AI_BOT_ТОКЕН_ТУТ"
+docker exec vault vault kv put secret/ai-bot/openai_api_key key="ВАШ_OPENAI_API_КЛЮЧ_ТУТ"
+
+# Kafka Bot секреты
+docker exec vault vault kv put secret/kafka-bot/telegram_token token="ВАШ_KAFKA_BOT_ТОКЕН_ТУТ"
+
+# Scrapy Bot секреты
+docker exec vault vault kv put secret/scrapy-bot/telegram_token token="ВАШ_SCRAPY_BOT_ТОКЕН_ТУТ"
+
+# Dashboard секреты
+docker exec vault vault kv put secret/dashboard/telegram_token token="ВАШ_DASHBOARD_ТОКЕН_ТУТ"
+
+# WordPress Publisher секреты
 docker exec vault vault kv put secret/wordpress/credentials url="http://localhost" user="admin" password="password"
 
 Write-Host "`n✅ Vault инициализирован!" -ForegroundColor Green
-Write-Host "📝 Не забудьте заменить 'ВАШ_ТОКЕН_ТУТ' на реальный токен!" -ForegroundColor Yellow
+Write-Host "📝 Не забудьте заменить все токены на реальные значения!" -ForegroundColor Yellow
 Write-Host "📝 Обновите WordPress учетные данные при необходимости!" -ForegroundColor Yellow
 Write-Host "🔗 Vault UI доступен по адресу: http://localhost:8200" -ForegroundColor Cyan
+Write-Host "`n📋 Список секретов для настройки:" -ForegroundColor Cyan
+Write-Host "  - AI Bot: secret/ai-bot/telegram_token, secret/ai-bot/openai_api_key" -ForegroundColor White
+Write-Host "  - Kafka Bot: secret/kafka-bot/telegram_token" -ForegroundColor White
+Write-Host "  - Scrapy Bot: secret/scrapy-bot/telegram_token" -ForegroundColor White
+Write-Host "  - Dashboard: secret/dashboard/telegram_token" -ForegroundColor White
+Write-Host "  - WordPress Publisher: secret/wordpress/credentials" -ForegroundColor White
 Write-Host "🔑 Root Token: myroot" -ForegroundColor Cyan 

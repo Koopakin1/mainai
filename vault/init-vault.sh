@@ -24,7 +24,32 @@ vault secrets enable -path=secret kv-v2
 # Создаем политику для ботов
 echo "📋 Создание политики для ботов..."
 cat > /tmp/bot-policy.hcl << EOF
-path "secret/data/telegram/token" {
+# AI Bot секреты
+path "secret/data/ai-bot/telegram_token" {
+  capabilities = ["read"]
+}
+
+path "secret/data/ai-bot/openai_api_key" {
+  capabilities = ["read"]
+}
+
+# Kafka Bot секреты
+path "secret/data/kafka-bot/telegram_token" {
+  capabilities = ["read"]
+}
+
+# Scrapy Bot секреты
+path "secret/data/scrapy-bot/telegram_token" {
+  capabilities = ["read"]
+}
+
+# Dashboard секреты
+path "secret/data/dashboard/telegram_token" {
+  capabilities = ["read"]
+}
+
+# WordPress Publisher секреты
+path "secret/data/wordpress/credentials" {
   capabilities = ["read"]
 }
 EOF
@@ -54,9 +79,30 @@ echo "Secret ID: $SECRET_ID"
 echo "$ROLE_ID" > /vault/roleid
 echo "$SECRET_ID" > /vault/secretid
 
-# Записываем Telegram токен в Vault
-echo "📱 Сохранение Telegram токена в Vault..."
-vault kv put secret/telegram/token token="ВАШ_ТОКЕН_ТУТ"
+# Записываем секреты для всех сервисов в Vault
+echo "📱 Сохранение секретов для всех сервисов в Vault..."
+
+# AI Bot секреты
+vault kv put secret/ai-bot/telegram_token token="ВАШ_AI_BOT_ТОКЕН_ТУТ"
+vault kv put secret/ai-bot/openai_api_key key="ВАШ_OPENAI_API_КЛЮЧ_ТУТ"
+
+# Kafka Bot секреты
+vault kv put secret/kafka-bot/telegram_token token="ВАШ_KAFKA_BOT_ТОКЕН_ТУТ"
+
+# Scrapy Bot секреты
+vault kv put secret/scrapy-bot/telegram_token token="ВАШ_SCRAPY_BOT_ТОКЕН_ТУТ"
+
+# Dashboard секреты
+vault kv put secret/dashboard/telegram_token token="ВАШ_DASHBOARD_ТОКЕН_ТУТ"
+
+# WordPress Publisher секреты
+vault kv put secret/wordpress/credentials url="http://localhost" user="admin" password="password"
 
 echo "✅ Vault инициализирован!"
-echo "📝 Не забудьте заменить 'ВАШ_ТОКЕН_ТУТ' на реальный токен!" 
+echo "📝 Не забудьте заменить все токены на реальные значения!"
+echo "📋 Список секретов для настройки:"
+echo "  - AI Bot: secret/ai-bot/telegram_token, secret/ai-bot/openai_api_key"
+echo "  - Kafka Bot: secret/kafka-bot/telegram_token"
+echo "  - Scrapy Bot: secret/scrapy-bot/telegram_token"
+echo "  - Dashboard: secret/dashboard/telegram_token"
+echo "  - WordPress Publisher: secret/wordpress/credentials" 
