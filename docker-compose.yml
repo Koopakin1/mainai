@@ -1,10 +1,123 @@
 version: '3.8'
 services:
+  # Vault Server для управления секретами
+  vault:
+    image: vault:1.15.0
+    container_name: vault
+    ports:
+      - "8200:8200"
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=myroot
+      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+      - VAULT_ADDR=http://0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    command: vault server -dev -dev-root-token-id=myroot -dev-listen-address=0.0.0.0:8200
+    networks:
+      - bot-network
+    restart: unless-stopped
+
+  # Vault Agent для AI Bot
+  vault-agent-ai-bot:
+    image: vault:1.15.0
+    container_name: vault-agent-ai-bot
+    depends_on:
+      - vault
+    environment:
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_TOKEN=myroot
+    volumes:
+      - ./vault/agent-config-ai-bot.hcl:/vault/config/agent.hcl:ro
+      - ./vault/templates:/vault/templates:ro
+      - ./vault/secrets:/vault/secrets
+    command: vault agent -config=/vault/config/agent.hcl
+    networks:
+      - bot-network
+    restart: unless-stopped
+
+  # Vault Agent для Kafka Bot
+  vault-agent-kafka-bot:
+    image: vault:1.15.0
+    container_name: vault-agent-kafka-bot
+    depends_on:
+      - vault
+    environment:
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_TOKEN=myroot
+    volumes:
+      - ./vault/agent-config-kafka-bot.hcl:/vault/config/agent.hcl:ro
+      - ./vault/templates:/vault/templates:ro
+      - ./vault/secrets:/vault/secrets
+    command: vault agent -config=/vault/config/agent.hcl
+    networks:
+      - bot-network
+    restart: unless-stopped
+
+  # Vault Agent для Scrapy Bot
+  vault-agent-scrapy-bot:
+    image: vault:1.15.0
+    container_name: vault-agent-scrapy-bot
+    depends_on:
+      - vault
+    environment:
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_TOKEN=myroot
+    volumes:
+      - ./vault/agent-config-scrapy-bot.hcl:/vault/config/agent.hcl:ro
+      - ./vault/templates:/vault/templates:ro
+      - ./vault/secrets:/vault/secrets
+    command: vault agent -config=/vault/config/agent.hcl
+    networks:
+      - bot-network
+    restart: unless-stopped
+
+  # Vault Agent для Dashboard
+  vault-agent-dashboard:
+    image: vault:1.15.0
+    container_name: vault-agent-dashboard
+    depends_on:
+      - vault
+    environment:
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_TOKEN=myroot
+    volumes:
+      - ./vault/agent-config-dashboard.hcl:/vault/config/agent.hcl:ro
+      - ./vault/templates:/vault/templates:ro
+      - ./vault/secrets:/vault/secrets
+    command: vault agent -config=/vault/config/agent.hcl
+    networks:
+      - bot-network
+    restart: unless-stopped
+
+  # Vault Agent для WordPress Publisher
+  vault-agent-wp-publisher:
+    image: vault:1.15.0
+    container_name: vault-agent-wp-publisher
+    depends_on:
+      - vault
+    environment:
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_TOKEN=myroot
+    volumes:
+      - ./vault/agent-config-wp-publisher.hcl:/vault/config/agent.hcl:ro
+      - ./vault/templates:/vault/templates:ro
+      - ./vault/secrets:/vault/secrets
+    command: vault agent -config=/vault/config/agent.hcl
+    networks:
+      - bot-network
+    restart: unless-stopped
+
+  # Kafka и Zookeeper для kafka-bot
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - bot-network
+
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     depends_on:
@@ -14,18 +127,95 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_HOST://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - bot-network
+
+  # AI Bot с Vault Agent
+  ai-bot:
+    build: ./ai-bot
+    ports:
+      - "8000:8000"
+    depends_on:
+      - vault-agent-ai-bot
+      - kafka
+    volumes:
+      - ./vault/secrets:/app/secrets:ro
+    environment:
+      - TELEGRAM_TOKEN_FILE=/app/secrets/telegram_token
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    networks:
+      - bot-network
+    restart: unless-stopped
+
+  # Kafka Bot с Vault Agent
   kafka-bot:
     build: ./kafka-bot
     depends_on:
+      - vault-agent-kafka-bot
       - kafka
+    volumes:
+      - ./vault/secrets:/app/secrets:ro
     environment:
-      - TELEGRAM_TOKEN=ВАШ_ТОКЕН_ТУТ
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - TELEGRAM_TOKEN_FILE=/app/secrets/telegram_token
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    networks:
+      - bot-network
+    restart: unless-stopped
+
+  # Scrapy Bot с Vault Agent
   scrapy-bot:
     build: ./scrapy-bot
-    environment:
-      - TELEGRAM_TOKEN=ВАШ_ТОКЕН_ТУТ
+    depends_on:
+      - vault-agent-scrapy-bot
     volumes:
-      - ./scrapy-bot/config.db:/app/config.db 
+      - ./scrapy-bot/config.db:/app/config.db
+      - ./vault/secrets:/app/secrets:ro
+    environment:
+      - TELEGRAM_TOKEN_FILE=/app/secrets/telegram_token
+    networks:
+      - bot-network
+    restart: unless-stopped
+
+  # Dashboard с Vault Agent
+  dashboard:
+    build: ./dashboard
+    ports:
+      - "8080:8080"
+    depends_on:
+      - vault-agent-dashboard
+    volumes:
+      - ./vault/secrets:/app/secrets:ro
+    environment:
+      - TELEGRAM_TOKEN_FILE=/app/secrets/telegram_token
+      - SCRAPY_BOT_URL=http://scrapy-bot:8000/health
+      - KAFKA_BOT_URL=http://kafka-bot:8000/health
+      - AI_BOT_URL=http://ai-bot:8000/health
+      - WP_PUBLISHER_URL=http://wp-publisher:8081/docs
+    networks:
+      - bot-network
+    restart: unless-stopped
+
+  # WordPress Publisher с Vault Agent
+  wp-publisher:
+    build: ./wp-publisher
+    ports:
+      - "8081:8081"
+    depends_on:
+      - vault-agent-wp-publisher
+    volumes:
+      - ./vault/secrets:/app/secrets:ro
+    environment:
+      - WP_URL_FILE=/app/secrets/wp_url
+      - WP_USER_FILE=/app/secrets/wp_user
+      - WP_PASSWORD_FILE=/app/secrets/wp_password
+    networks:
+      - bot-network
+    restart: unless-stopped
+
+networks:
+  bot-network:
+    driver: bridge 
